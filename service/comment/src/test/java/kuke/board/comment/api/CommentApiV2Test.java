@@ -59,6 +59,59 @@ public class CommentApiV2Test {
                 .uri("/v2/comments/{commentId}", 262404302758727680L)
                 .retrieve();
     }
+    
+    @Test
+    void readAll() {
+        CommentPageResponse response = restClient.get()
+            .uri("/v2/comments?articleId=1&pageSize=10&page=50000")
+            .retrieve()
+            .body(CommentPageResponse.class);
+        
+        System.out.println("response.getCommentCount() = " + response.getCommentCount());
+        for (CommentResponse comment : response.getComments()) {
+            System.out.println("comment.getCommentId() = " + comment.getCommentId());
+        }
+        
+        /**
+         response.getCommentCount() = 500001
+         comment.getCommentId() = 262406002748531132
+         comment.getCommentId() = 262406002748531133
+         comment.getCommentId() = 262406002748531134
+         comment.getCommentId() = 262406002748531135
+         comment.getCommentId() = 262406002748531136
+         comment.getCommentId() = 262406002748531137
+         comment.getCommentId() = 262406002748531138
+         comment.getCommentId() = 262406002748531139
+         comment.getCommentId() = 262406002748531140
+         comment.getCommentId() = 262406002748531141
+         */
+    }
+    
+    @Test
+    void readAllInfiniteScroll() {
+        List<CommentResponse> responses1 = restClient.get()
+            .uri("/v2/comments/infinite-scroll?articleId=1&pageSize=5")
+            .retrieve()
+            .body(new ParameterizedTypeReference<List<CommentResponse>>() {
+            });
+        
+        System.out.println("firstPage");
+        for (CommentResponse response : responses1) {
+            System.out.println("response.getCommentId() = " + response.getCommentId());
+        }
+        
+        String lastPath = responses1.getLast().getPath();
+        List<CommentResponse> responses2 = restClient.get()
+            .uri("/v2/comments/infinite-scroll?articleId=1&pageSize=5&lastPath=%s".formatted(lastPath))
+            .retrieve()
+            .body(new ParameterizedTypeReference<List<CommentResponse>>() {
+            });
+        
+        System.out.println("secondPage");
+        for (CommentResponse response : responses2) {
+            System.out.println("response.getCommentId() = " + response.getCommentId());
+        }
+    }
 
     @Getter
     @AllArgsConstructor
